@@ -6,94 +6,37 @@ clc;clear all;close all;
 SNR=10;
 noisy=x+sqrt(var(x)/10^(SNR/10))*randn(length(x),1);   
 
-
+% noisy=noisy/max(abs(noisy));
 %% Initiate the algorithm
 L=5;
 f0=200;
-a=amp_ls(x(1:200),2*pi*f0/fs*[1:L]);
-x_ini=[2*pi*f0/fs;abs(a);0]; PHASE=angle(a);
-P=1*eye(L+2,L+2); 
+a=amp_ls(x(1:300),2*pi*f0/fs*[1:L]);
+x_ini=[2*pi*f0/fs;sqrt(sum(a.^2,2));0]; PHASE=atan(a(:,2)./a(:,1));
+P=1e-6*eye(L+2,L+2); 
 R_noise=1e4;
-Q=eye(L+1,L+1);
+Q=1*eye(L+1,L+1);
 smooth_flag=1;
 
 
 state_matrix=PitchEKF(noisy,L,x_ini,P,R_noise,Q,PHASE,smooth_flag);
 plot([1:size(state_matrix,2)]/fs,state_matrix(1,:)/2/pi*fs);
-xlabel('Time [s]')
-ylabel('Frequency [Hz]')
+xlabel('Time [s]');
+ylabel('Frequency [Hz]');
 
 
 
 function a=amp_ls(x,w);
-%AMP_LS   Complex amplitude estimator based on LS
-%
-% Syntax:
-%   a=amp_ls(x,w);
-%
-% About:
-%   This file is part of the Multi-Pitch Estimation Toolbox for the book
-%   M. G. Christensen and A. Jakobsson, Multi-Pitch Estimation, Morgan &
-%   Claypool Publishers, 2009.
-%
-% Input:
-%   x        input signal (assumed complex)
-%   w        vector of L frequencies
-%   
-% Output:
-%   a        vector of L complex amplitudes for the frequencies in w
-%
-% Description:
-%   The function estimates the complex amplitudes associated with a set of
-%   frequencies. It does so using the least-squares method as described in
-%   Section 5.2 of Christensen and Jakobsson (2009).
-%
-% Example:
-%   a=amp_ls(x,w0*[1:L]);
-%
-% Implemented By:
-%   Mads G. Christensen (mgc@es.aau.dk)
-%
+%AMP_LS   amplitude estimator based on LS
 x=x(:);
 N=length(x);
 Z=vandermonde_mads(w,N);
 a=Z\x;
+a=reshape(a,[],2);
 end
 
 function Z=vandermonde_mads(w,N);
-%VANDERMONDE   Constructs Vandermonde matrix from frequencies
-%
-% Syntax:
-%   Z=vandermonde(w,N);
-%
-% About:
-%   This file is part of the Multi-Pitch Estimation Toolbox for the book
-%   M. G. Christensen and A. Jakobsson, Multi-Pitch Estimation, Morgan &
-%   Claypool Publishers, 2009.
-%
-% Input:
-%   w        L frequencies in radians
-%   N        
-%
-% Output:
-%   Z        N-by-L Vandermonde matrix 
-%
-% Description:
-%   Auxiliary function that computes the Vandermonde matrix for a set of
-%   frequencies as described in Section 1.4 of Christensen and Jakobsson 
-%   (2009).
-%
-% Example:
-%   Z=vandermonde(2*pi*[1:5],100)
-%
-% Implemented By:
-%   Mads G. Christensen (mgc@es.aau.dk)
 w=w(:)';
-Z=zeros(N,length(w));
-z=[exp(j*w)];
-for n=[1:N],
-  Z(n,:)=z.^(n-1);
-end
+Z=[cos(w.*[1:N]'),sin(w.*[1:N]')];
 end
 
 
@@ -170,8 +113,6 @@ else
     PP_upS = [];
 end
 end
-
-
 
 
 
