@@ -4,17 +4,17 @@ clc;clear all;close all;
 [x,fs]=audioread('fa.wav');
 
 SNR=10;
-noisy=x+sqrt(var(x)/10^(SNR/10))*randn(length(x),1);   
+noise=sqrt(var(x)/10^(SNR/10))*randn(length(x),1);
+noisy=x+noise;   
 
-% noisy=noisy/max(abs(noisy));
 %% Initiate the algorithm
 L=5;
 f0=200;
 a=amp_ls(x(1:300),2*pi*f0/fs*[1:L]);
 x_ini=[2*pi*f0/fs;sqrt(sum(a.^2,2));0]; PHASE=atan(a(:,2)./a(:,1));
 P=1e-6*eye(L+2,L+2); 
-R_noise=1e4;
-Q=1*eye(L+1,L+1);
+R_noise=var(noisy)/10;
+Q=1e-7*eye(L+1,L+1);Q(1,1)= (2*pi*0.2/fs)^2;
 smooth_flag=1;
 
 
